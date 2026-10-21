@@ -1,0 +1,6 @@
+.env
+.Renviron
+*.pem
+.Rhistory
+.RData
+.Rproj.user/

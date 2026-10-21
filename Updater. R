@@ -1,0 +1,114 @@
+
+setwd("~/brc20")
+library(readr)
+library(stringr)
+options(scipen = 999)
+
+
+uno <- read_delim("uno.txt", delim = "\t", 
+                  escape_double = FALSE, trim_ws = TRUE)
+
+
+dos <- read_delim("dos.txt", delim = "\t", 
+                  escape_double = FALSE, trim_ws = TRUE)
+dos$BORRAR1 <- NULL
+dos$BORRAR3 <- NULL
+dos$BORRAR2 <- NULL
+dos$...8 <- NULL
+uno <- rbind(uno, dos)
+
+dup <- duplicated(uno$character)
+table(dup)
+
+uno <- subset(uno, dup ==FALSE)
+uno$utf_link <- str_replace_all(uno$`UTF-8`, " ", "%")
+uno$utf_link <- toupper(uno$utf_link)
+uno$utf_link <- paste("%", uno$utf_link, sep="")
+uno$download_link <- paste("https://brc20api.bestinslot.xyz/v1/get_brc20_ticker/", uno$utf_link, sep="")
+
+
+
+
+
+SUPLY <- c() 
+LIMIT_PER_MINT <- c()
+REMAINING_SUPPLY <- c()
+DEPLOY_INCR_NUMBER <- c()
+SALES <- c()
+HOLDERS <- c()
+
+links <- uno$download_link
+
+
+length(SUPLY)/11
+
+for(j in 1:45){
+  
+  
+comienzo <- length(SUPLY)+1
+final <- length(SUPLY)+50
+
+for(i in comienzo:final){
+
+#i=1
+url <- links[i]
+result <- as.data.frame(colnames(as.data.frame(read.csv(url))))
+
+supply <- result[2,1]
+supply <- as.numeric(str_remove(supply, "max_supply."))
+SUPLY[i] <- supply 
+
+limit_per_mint <-  result[4,1]
+limit_per_mint <- as.numeric(str_remove(limit_per_mint, "limit_per_mint."))
+LIMIT_PER_MINT[i] <- limit_per_mint
+
+
+limit_per_mint  <-  result[5,1]
+limit_per_mint <- as.numeric(str_remove(limit_per_mint, "remaining_supply."))
+REMAINING_SUPPLY[i] <- limit_per_mint
+
+limit_per_mint  <-  result[6,1]
+limit_per_mint <- str_remove(limit_per_mint, "deploy_incr_number.")
+limit_per_mint = unlist(strsplit(limit_per_mint, split='.', fixed=TRUE))[1]
+DEPLOY_INCR_NUMBER[i] <- limit_per_mint
+
+limit_per_mint  <-  result[7,1]
+limit_per_mint <- str_remove(limit_per_mint, "sales...total_sale.")
+print(paste(limit_per_mint, i))
+SALES[i] <- limit_per_mint
+
+limit_per_mint  <-  result[10,1]
+limit_per_mint <- str_remove(limit_per_mint, "holders...holders.")
+limit_per_mint = unlist(strsplit(limit_per_mint, split='.', fixed=TRUE))[1]
+limit_per_mint  
+HOLDERS[i] <- limit_per_mint
+
+}
+
+ Sys.sleep(20)
+
+}
+
+
+################################################################################
+################################################################################
+
+
+dos <- uno[1:length(SUPLY),]
+
+dos$supply <- SUPLY
+dos$limit_mint <- LIMIT_PER_MINT
+dos$remaining <- REMAINING_SUPPLY
+dos$deploy <- as.numeric(DEPLOY_INCR_NUMBER)
+dos$sales <- SALES
+dos$sales2 <- ifelse(dos$sales == "null", 0,SALES)
+dos$sales <- as.numeric(as.character(dos$sales2))
+dos$sales2 <- NULL
+dos$holders <- as.numeric(as.character(HOLDERS))
+
+
+setwd("~/brc20/faraon/datos")
+
+
+name <- paste0("data_", Sys.time(), ".csv")
+write_excel_csv(dos, "name31.csv")
